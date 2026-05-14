@@ -1,19 +1,17 @@
-import cv2
+# processor.py 예시
 from ultralytics import YOLO
+import os
 
 class VideoProcessor:
-    def __init__(self, model_path='yolov8n-pose.pt'):
-        # 체형 및 포즈 탐지 모델 로드
-        self.model = YOLO(model_path)
+    def __init__(self):
+        self.model = None
 
-    def process_frame(self, frame, conf=0.5):
-        # persist=True로 설정해야 프레임 간 고유 ID가 유지됨 (Re-ID 효과)
-        results = self.model.track(frame, persist=True, conf=conf, verbose=False)
-        
-        # 분석 결과 시각화
-        annotated_frame = results[0].plot()
-        
-        # ID 정보 추출 (추후 하이라이트 타겟팅용)
-        ids = results[0].boxes.id.cpu().numpy().astype(int) if results[0].boxes.id is not None else []
-        
-        return annotated_frame, ids
+    def process_frame(self, frame):
+        # 모델이 없을 때만 로드 (최초 1회)
+        if self.model is None:
+            # .pt 파일을 미리 레포에 업로드해두면 다운로드 과정을 생략해 안정적입니다.
+            self.model = YOLO('yolov8n-pose.pt') 
+            
+        # 추론 시 half=True(소수점 정밀도 낮춤)를 사용하여 메모리 사용량 절감
+        results = self.model(frame, verbose=False, half=True)
+        # ... 이후 처리 로직
